@@ -1,0 +1,76 @@
+name: F9K1103 v1 - clean Gargoyle 1.12 - official OpenWrt 18.06
+on:
+  push:
+    branches: [f9k1103v1-gargoyle112-clean]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    container:
+      image: ubuntu:20.04
+    timeout-minutes: 360
+    steps:
+      - name: Install legacy Gargoyle requirements
+        run: |
+          apt-get update
+          DEBIAN_FRONTEND=noninteractive apt-get install -y \
+            build-essential ca-certificates gcc-multilib g++-multilib gawk gettext \
+            git python2.7 python-is-python2 python3 python3-distutils \
+            libncurses5-dev libssl-dev rsync unzip zlib1g-dev \
+            file wget perl patch subversion swig time u-boot-tools curl \
+            flex bison nodejs npm ccache libelf-dev
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify UNMODIFIED original Gargoyle sources
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin refs/heads/1.12:refs/remotes/origin/1.12
+          test -z "$(git diff --name-only origin/1.12 HEAD -- build.sh package patches-generic netfilter-match-modules)"
+          python --version
+          python3 dev-utils/f9k1103v1/create_profile.py
+      - name: Prepare OFFICIAL OpenWrt 18.06 from Gargoyle native pinned commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p downloaded
+          git init downloaded/openwrt-18.06-5625f5b
+          git -C downloaded/openwrt-18.06-5625f5b remote add origin https://github.com/openwrt/openwrt.git
+          git -C downloaded/openwrt-18.06-5625f5b fetch --depth 1 origin 5625f5bc36954d644cb80adf8de47854c65d91c3
+          git -C downloaded/openwrt-18.06-5625f5b checkout --detach FETCH_HEAD
+          python3 dev-utils/f9k1103v1/stage_openwrt.py downloaded/openwrt-18.06-5625f5b
+          git -C downloaded/openwrt-18.06-5625f5b status --short
+      - name: Original Gargoyle minifiers
+        run: npm install --prefix minifiers --no-audit --no-fund uglify-js uglifycss
+      - name: Build using pristine Gargoyle 1.12 build.sh
+        shell: bash
+        env:
+          FORCE_UNSAFE_CONFIGURE: '1'
+          TERM: xterm
+        run: |
+          set -o pipefail
+          make ramips.f9k1103v1 FULL_BUILD=true V=99 BUILD_THREADS=2 JS_COMPRESS=true CSS_COMPRESS=true 2>&1 | tee f9k1103v1-build.log
+          test -d images/ramips
+          find images/ramips -type f -name '*f9k1103*squashfs*sysupgrade.bin' | grep -q .
+      - name: Static image verification
+        run: python3 dev-utils/f9k1103v1/validate_image.py
+      - name: Safety label
+        run: |
+          printf '%s\n' 'UNTESTED Belkin F9K1103 v1 - Gargoyle 1.12 / OpenWrt 18.06' \
+            'Static validation only. DO NOT FLASH without hardware recovery.' \
+            > f9k1103v1-output/READ-ME-FIRST.txt
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: F9K1103V1-Gargoyle112-OpenWrt1806-UNTESTED
+          path: f9k1103v1-output/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: F9K1103V1-Gargoyle112-build-logs
+          path: f9k1103v1-build.log
+          if-no-files-found: warn
