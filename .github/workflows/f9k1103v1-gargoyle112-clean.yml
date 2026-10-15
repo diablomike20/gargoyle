@@ -43,6 +43,7 @@ jobs:
           git -C downloaded/openwrt-18.06-5625f5b fetch --depth 1 origin 5625f5bc36954d644cb80adf8de47854c65d91c3
           git -C downloaded/openwrt-18.06-5625f5b checkout --detach FETCH_HEAD
           python3 dev-utils/f9k1103v1/stage_openwrt.py downloaded/openwrt-18.06-5625f5b
+          python3 dev-utils/f9k1103v1/preflight.py
           git -C downloaded/openwrt-18.06-5625f5b status --short
       - name: Original Gargoyle minifiers
         run: npm install --prefix minifiers --no-audit --no-fund uglify-js uglifycss
@@ -69,9 +70,20 @@ jobs:
           name: F9K1103V1-Gargoyle112-OpenWrt1806-UNTESTED
           path: f9k1103v1-output/
           if-no-files-found: error
+      - name: Compress build diagnostics
+        if: always()
+        shell: bash
+        run: |
+          if [ -f f9k1103v1-build.log ]; then
+            tail -n 350 f9k1103v1-build.log > f9k1103v1-build-tail.log
+            gzip -6 -c f9k1103v1-build.log > f9k1103v1-build.log.gz
+            echo "Build log saved as compressed artifact."
+          fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: F9K1103V1-Gargoyle112-build-logs
-          path: f9k1103v1-build.log
+          path: |
+            f9k1103v1-build.log.gz
+            f9k1103v1-build-tail.log
           if-no-files-found: warn
