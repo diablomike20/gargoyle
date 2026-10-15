@@ -26,3 +26,14 @@ Full build may also fail on historical netfilter/hostapd patch compatibility.
 Original Gargoyle 1.12 has NO Hungarian language pack in the checked repo.
 Build logs and static validation are required before any image can be shared.
 Hardware runtime NOT TESTED; never flash without independent verification.
+
+## 2026-10-15 build failure and narrow correction
+The clean build run 38691527885 got through the Gargoyle checks and OpenWrt
+compilation into package creation, then failed with:
+`Package kmod-rt2800-pci is missing dependencies ... rt2x00pci.ko`.
+Pinned official OpenWrt 18.06 mac80211 defines the missing driver as
+`kmod-rt2x00-pci`, required by `kmod-rt2800-pci`. The generated Belkin
+profile now selects BOTH drivers. Neither upstream Gargoyle packages nor
+its build.sh nor OpenWrt mac80211 Makefile were altered.
+Legacy source mirrors also logged network retries; they are not proof of a
+missing or corrupt package. No unverified download URL has been substituted.

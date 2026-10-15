@@ -24,7 +24,7 @@ replace_once("CONFIG_TARGET_ROOTFS_INITRAMFS=y",
 replace_once("# CONFIG_PACKAGE_kmod-usb-ohci is not set",
              "CONFIG_PACKAGE_kmod-usb-ohci=y")
 replace_once("CONFIG_PACKAGE_kmod-usb2=m", "CONFIG_PACKAGE_kmod-usb2=y")
-original += "\n# Belkin RT3091 PCI radio, device-specific driver\nCONFIG_PACKAGE_kmod-rt2800-pci=y\n"
+original += (\n    "\n# Belkin RT3091 PCI radio, require both rt2x00 PCI transport and RT2800 driver.\n"\n    "CONFIG_PACKAGE_kmod-rt2x00-pci=y\n"\n    "CONFIG_PACKAGE_kmod-rt2800-pci=y\n"\n)
 out = Path("targets/ramips/profiles/f9k1103v1/config")
 out.parent.mkdir(parents=True, exist_ok=True)
 if out.exists():

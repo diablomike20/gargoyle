@@ -24,6 +24,8 @@ require(len(stockopts) > 15, "too few stock Gargoyle package options")
 require(stockopts == currentopts, "Gargoyle feature selections differ from the stock Gargoyle 1.12 profile")
 require("CONFIG_TARGET_ramips_rt3883_DEVICE_f9k1103=y" in device, "Belkin target unset")
 require("CONFIG_TARGET_ROOTFS_SQUASHFS=y" in device, "SquashFS unset")
+require("CONFIG_PACKAGE_kmod-rt2x00-pci=y" in device, "RT3091 rt2x00 PCI transport missing")
+require("CONFIG_PACKAGE_kmod-rt2800-pci=y" in device, "RT3091 wireless driver missing")
 
 dts = (tree / "target/linux/ramips/dts/F9K1103.dts").read_text()
 require('model = "Belkin F9K1103 Version 1.0"' in dts, "wrong board model")
