@@ -28,6 +28,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          git config --global --add safe.directory "$PWD"
           git fetch origin refs/heads/1.12:refs/remotes/origin/1.12
           test -z "$(git diff --name-only origin/1.12 HEAD -- build.sh package patches-generic netfilter-match-modules)"
           python --version
